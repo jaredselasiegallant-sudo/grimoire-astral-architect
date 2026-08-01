@@ -286,7 +286,7 @@ public sealed partial class MainWindow : Window
 
         // Record gesture quality for mastery
         var qualityRecord = _gestureMastery.RecordAttempt(gesture, 
-            _gestureEngine.GetLastStrokeDeviations(), 
+            _gestureEngine.GetLastStrokeDeviations().ToArray(), 
             _gestureEngine.GetLastStrokeSpeed(),
             _gestureEngine.GetLastStrokeDuration());
 
@@ -370,11 +370,6 @@ public sealed partial class MainWindow : Window
     {
         switch (e.Key)
         {
-            case Windows.System.VirtualKey.F5:
-                _ = ViewModel.SaveGameCommand.ExecuteAsync(null);
-                e.Handled = true;
-                break;
-
             case Windows.System.VirtualKey.F5:
                 _ = ViewModel.SaveGameCommand.ExecuteAsync(null);
                 e.Handled = true;
