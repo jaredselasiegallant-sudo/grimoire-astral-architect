@@ -1,8 +1,6 @@
 using System.IO;
 using System.Numerics;
-using System.Collections.ObjectModel;
 using Microsoft.UI;
-using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -21,11 +19,9 @@ using Grimoire.Engine.GameLoop;
 using Grimoire.Engine.Input;
 using Grimoire.Engine.Rendering;
 using Grimoire.Engine.Juice;
-using Grimoire.Core.Buildings;
 using Grimoire.Engine.Ecology;
 using Grimoire.Engine.Audio;
 using Grimoire.Core.Input;
-using Grimoire.Core.Bonding;
 using Windows.Graphics;
 using Windows.UI;
 
@@ -53,6 +49,7 @@ public sealed partial class MainWindow : Window
     private readonly GestureMastery _gestureMastery = new();
     private Timer? _autoSaveTimer;
 
+    private SKXamlCanvas? _skiaCanvas;
     private MainViewModel ViewModel { get; }
     private readonly List<Vector2> _currentStrokeTrail = [];
     private bool _narrativeActive;
@@ -62,6 +59,16 @@ public sealed partial class MainWindow : Window
     {
         this.InitializeComponent();
         this.AppWindow.Resize(new Windows.Graphics.SizeInt32(1400, 800));
+
+        // Create SkiaSharp canvas programmatically (avoids XAML type resolution)
+        _skiaCanvas = new SKXamlCanvas();
+        _skiaCanvas.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+            Microsoft.UI.Xaml.ColorHelper.FromArgb(255, 5, 5, 16));
+        _skiaCanvas.PaintSurface += SKCanvasView_PaintSurface;
+        _skiaCanvas.PointerPressed += GameCanvas_PointerPressed;
+        _skiaCanvas.PointerMoved += GameCanvas_PointerMoved;
+        _skiaCanvas.PointerReleased += GameCanvas_PointerReleased;
+        CanvasHost.Child = _skiaCanvas;
 
         var dbDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -108,10 +115,6 @@ public sealed partial class MainWindow : Window
         await _repository.InitialiseAsync();
         await _stateService.InitialiseAsync();
 
-        ViewModel.Inventory.LoadFrom(_stateService.CurrentState.Inventory);
-        ViewModel.FamiliarManagement.LoadFrom(_stateService.CurrentState.Familiars);
-        ViewModel.CraftingCauldron.LoadFrom(_stateService.CurrentState.Inventory);
-
         _narrativeService.RestoreShownLines(_stateService.CurrentState.ShownNarrativeLines);
         _tutorialService.RestoreProgress(_stateService.CurrentState.CompletedTutorialSteps);
 
@@ -153,8 +156,6 @@ public sealed partial class MainWindow : Window
         _repository.Dispose();
     }
 
-    // ─── Render Loop ─────────────────────────────────────────────
-
     private void OnFrameTick(float deltaTime, double elapsedTime)
     {
         _particles.Update(deltaTime);
@@ -177,23 +178,19 @@ public sealed partial class MainWindow : Window
 
         _ = DispatcherQueue.TryEnqueue(() =>
         {
-            UpdateUI();
-            SKCanvasView?.Invalidate();
+            ManaText.Text = _stateService.CurrentState.ManaCrystals.ToString();
+
+            var onCooldown = Enum.GetValues<SpellGesture>()
+                .Where(g => g != SpellGesture.Unknown)
+                .Where(g => !_stateService.IsSpellReady(g))
+                .ToList();
+            var cooldownText = onCooldown.Count > 0
+                ? $"\u23F3 {_stateService.GetSpellCooldownRemaining(onCooldown[0]):mm\\:ss}"
+                : "";
+            CooldownText.Text = cooldownText;
+
+            _skiaCanvas?.Invalidate();
         });
-    }
-
-    private void UpdateUI()
-    {
-        ManaText.Text = _stateService.CurrentState.ManaCrystals.ToString();
-
-        var onCooldown = Enum.GetValues<SpellGesture>()
-            .Where(g => g != SpellGesture.Unknown)
-            .Where(g => !_stateService.IsSpellReady(g))
-            .ToList();
-
-        CooldownText.Text = onCooldown.Count > 0
-            ? $"\u23F3 {_stateService.GetSpellCooldownRemaining(onCooldown[0]):mm\\:ss}"
-            : "";
     }
 
     private void SKCanvasView_PaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -234,13 +231,11 @@ public sealed partial class MainWindow : Window
         surface.Canvas.Translate(-shake.X, -shake.Y);
     }
 
-    // ─── Gesture Input ───────────────────────────────────────────
-
     private void GameCanvas_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (_narrativeActive) return;
+        if (_narrativeActive || _skiaCanvas is null) return;
 
-        var pos = e.GetCurrentPoint(SKCanvasView).Position;
+        var pos = e.GetCurrentPoint(_skiaCanvas).Position;
         _currentStrokeTrail.Clear();
         _currentStrokeTrail.Add(new Vector2((float)pos.X, (float)pos.Y));
 
@@ -250,9 +245,9 @@ public sealed partial class MainWindow : Window
 
     private void GameCanvas_PointerMoved(object sender, PointerRoutedEventArgs e)
     {
-        if (_narrativeActive) return;
+        if (_narrativeActive || _skiaCanvas is null) return;
 
-        var pos = e.GetCurrentPoint(SKCanvasView).Position;
+        var pos = e.GetCurrentPoint(_skiaCanvas).Position;
         _currentStrokeTrail.Add(new Vector2((float)pos.X, (float)pos.Y));
         _gestureEngine.AddPoint(new Vector2((float)pos.X, (float)pos.Y));
         _particleEcology.SetCursor((float)pos.X, (float)pos.Y, true);
@@ -260,10 +255,10 @@ public sealed partial class MainWindow : Window
 
     private void GameCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
     {
-        if (_narrativeActive) return;
+        if (_narrativeActive || _skiaCanvas is null) return;
 
         var gesture = _gestureEngine.EndStroke();
-        var pos = e.GetCurrentPoint(SKCanvasView).Position;
+        var pos = e.GetCurrentPoint(_skiaCanvas).Position;
 
         var qualityRecord = _gestureMastery.RecordAttempt(gesture,
             _gestureEngine.GetLastStrokeDeviations().ToArray(),
@@ -336,8 +331,6 @@ public sealed partial class MainWindow : Window
         _renderer.ClearGestureTrail();
     }
 
-    // ─── Keyboard Shortcuts ──────────────────────────────────────
-
     private void MainWindow_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         switch (e.Key)
@@ -360,31 +353,11 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ─── Button Click Handlers ───────────────────────────────────
-
     private void CraftButton_Click(object sender, RoutedEventArgs e)
     {
         ViewModel.CraftingCauldron.CraftCommand.Execute(null);
         CraftingResultText.Text = ViewModel.CraftingCauldron.CraftingResult;
     }
-
-    private void ClearButton_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.CraftingCauldron.ClearSlotsCommand.Execute(null);
-        CraftingResultText.Text = ViewModel.CraftingCauldron.CraftingResult;
-    }
-
-    private void SendExpedition_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.FamiliarManagement.SendOnExpeditionCommand.Execute(null);
-    }
-
-    private void RecallFamiliar_Click(object sender, RoutedEventArgs e)
-    {
-        ViewModel.FamiliarManagement.RecallFamiliarCommand.Execute(null);
-    }
-
-    // ─── Narrative Overlay ───────────────────────────────────────
 
     private void OnNarrativeReady(NarrativeLine line)
     {
@@ -415,7 +388,6 @@ public sealed partial class MainWindow : Window
         };
 
         NarrativeText.Text = line.Text;
-
         NarrativeDismissButton.Visibility = Visibility.Visible;
     }
 
@@ -441,8 +413,6 @@ public sealed partial class MainWindow : Window
 
     private void NarrativeDismissButton_Click(object sender, RoutedEventArgs e) => DismissNarrative();
 
-    // ─── Tutorial ────────────────────────────────────────────────
-
     private void OnTutorialStepActivated(TutorialStep step)
     {
         _ = DispatcherQueue.TryEnqueue(() =>
@@ -457,8 +427,6 @@ public sealed partial class MainWindow : Window
         _stateService.CurrentState.TutorialCompleted = true;
         _narrativeService.FireEvent("chapter1_complete");
     }
-
-    // ─── Notifications (Toast) ───────────────────────────────────
 
     private void OnNotificationQueued(NotificationEvent evt)
     {
@@ -514,8 +482,6 @@ public sealed partial class MainWindow : Window
         }, null, TimeSpan.FromSeconds(evt.DurationSeconds), Timeout.InfiniteTimeSpan);
     }
 
-    // ─── Window State Persistence ────────────────────────────────
-
     private void RestoreWindowState()
     {
         var s = _settingsService.Settings;
@@ -536,28 +502,6 @@ public sealed partial class MainWindow : Window
         _settingsService.Settings.WindowHeight = size.Height;
         _settingsService.Settings.IsMaximized = this.AppWindow.Presenter != null;
     }
-
-    // ─── Ambient Effects ─────────────────────────────────────────
-
-    private void RegisterAmbientEmitters()
-    {
-        foreach (var building in _stateService.CurrentState.Buildings)
-        {
-            _particles.AddEmitter(new ParticleSystem.Emitter
-            {
-                X = building.GridX * 80 + 40,
-                Y = building.GridY * 80 + 40,
-                Color = new SKColor(100, 180, 255, 120),
-                Speed = 8f,
-                Lifetime = 3f,
-                Size = 2f,
-                Spread = 30f,
-                Interval = 0.5f
-            });
-        }
-    }
-
-    // ─── Spell Helpers ───────────────────────────────────────────
 
     private static int GetSpellManaCost(SpellGesture gesture) => gesture switch
     {
