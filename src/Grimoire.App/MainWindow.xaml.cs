@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using SkiaSharp;
-using SkiaSharp.Views.WinUI;
+using SkiaSharp.Views.Windows;
 using Grimoire.App.Services;
 using Grimoire.App.ViewModels;
 using Grimoire.Core.Enums;
