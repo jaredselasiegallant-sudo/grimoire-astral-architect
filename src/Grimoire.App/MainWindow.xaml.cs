@@ -63,7 +63,7 @@ public sealed partial class MainWindow : Window
         // Create SkiaSharp canvas programmatically (avoids XAML type resolution)
         _skiaCanvas = new SKXamlCanvas();
         _skiaCanvas.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
-            Microsoft.UI.Xaml.ColorHelper.FromArgb(255, 5, 5, 16));
+            Windows.UI.Color.FromArgb(255, 5, 5, 16));
         _skiaCanvas.PaintSurface += SKCanvasView_PaintSurface;
         _skiaCanvas.PointerPressed += GameCanvas_PointerPressed;
         _skiaCanvas.PointerMoved += GameCanvas_PointerMoved;
