@@ -13,27 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
-      - name: Setup NuGet
-        uses: NuGet/setup-nuget@v2
-
-      - name: Restore NuGet packages
-        run: nuget restore Grimoire.AstralArchitect.sln
+      - name: Restore
+        run: dotnet restore src/Grimoire.App/Grimoire.App.csproj
 
       - name: Publish win-x64
         run: >
-          msbuild src/Grimoire.App/Grimoire.App.csproj
-          /p:Configuration=Release
-          /p:Platform=x64
-          /p:RuntimeIdentifier=win-x64
-          /p:SelfContained=true
-          /p:PublishSingleFile=true
-          /p:IncludeNativeLibrariesForSelfExtract=true
-          /p:WindowsAppSDKSelfContained=true
-          /t:Publish
-          /p:OutputPath=./publish
+          dotnet publish src/Grimoire.App/Grimoire.App.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o ./publish
 
       - name: Zip output
         run: Compress-Archive -Path ./publish/* -DestinationPath Grimoire-Astral-Architect-win-x64.zip
