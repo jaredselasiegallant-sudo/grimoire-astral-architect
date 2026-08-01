@@ -1,11 +1,9 @@
 <Project>
-  <!-- Strip win10-* RIDs injected by WindowsAppSDK 1.5 that .NET 8 SDK doesn't recognize -->
-  <Target Name="StripWin10RIDs" BeforeTargets="ProcessFrameworkReferences">
-    <ItemGroup>
-      <RuntimeIdentifier Remove="@(RuntimeIdentifier)" Condition="$([System.String]::new('%(RuntimeIdentifier.Identity)').Contains('win10'))" />
-    </ItemGroup>
+  <!-- After WASDK 1.5 injects win10-* RIDs, reset RuntimeIdentifiers to only win-x64
+       before ProcessFrameworkReferences tries to resolve them -->
+  <Target Name="FixWin10RIDs" BeforeTargets="ProcessFrameworkReferences" AfterTargets="ResolveAssemblyReferences">
     <PropertyGroup>
-      <RuntimeIdentifiers>$([System.String]::Join(';', @(RuntimeIdentifier)))</RuntimeIdentifiers>
+      <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     </PropertyGroup>
   </Target>
 </Project>
