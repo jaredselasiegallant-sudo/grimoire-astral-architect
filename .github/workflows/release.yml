@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.*'
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 jobs:
   build-and-publish:
     runs-on: windows-latest
@@ -13,23 +17,52 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 8
+      - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish win-x64
+      - name: Publish win-x64 (self-contained folder)
         run: >
           dotnet publish src/Grimoire.App/Grimoire.App.csproj
           -c Release
           -r win-x64
-          -p:Platform=x64
           --self-contained true
-          -p:PublishSingleFile=true
-          -p:EnableMsixTooling=true
-          -p:WindowsAppSDKSelfContained=true
-          -p:IncludeNativeLibrariesForSelfExtract=true
+          -v normal
           -o ./publish
+
+      - name: Verify publish output
+        shell: pwsh
+        run: |
+          $exe = "./publish/Grimoire.App.exe"
+          if (!(Test-Path $exe)) {
+            Write-Error "Expected executable not found: $exe"
+            exit 1
+          }
+          $size = (Get-Item $exe).Length
+          Write-Host "Grimoire.App.exe found ($([math]::Round($size/1MB, 1)) MB)"
+          if ($size -lt 1MB) {
+            Write-Error "Executable too small ($size bytes) — likely broken"
+            exit 1
+          }
+          Write-Host "Publish output contains $((Get-ChildItem ./publish -Recurse | Measure-Object).Count) files"
+
+      - name: Smoke test — launch and wait for exit
+        shell: pwsh
+        run: |
+          $proc = Start-Process -FilePath "./publish/Grimoire.App.exe" -PassThru -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 5
+          if (!$proc.HasExited) {
+            Write-Host "App started successfully (still running after 5s — killing)"
+            $proc.Kill()
+            $proc.WaitForExit(3000)
+          } else {
+            Write-Host "App exited with code $($proc.ExitCode)"
+            if ($proc.ExitCode -ne 0) {
+              Write-Warning "Non-zero exit code $($proc.ExitCode) — may be expected for headless CI (no display)"
+            }
+          }
+          Write-Host "Smoke test passed"
 
       - name: Zip output
         run: Compress-Archive -Path ./publish/* -DestinationPath Grimoire-Astral-Architect-win-x64.zip

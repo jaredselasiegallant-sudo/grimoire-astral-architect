@@ -7,12 +7,21 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x64;ARM64</Platforms>
+    <Platform>x64</Platform>
+
+    <!-- WinUI 3 / Windows App SDK -->
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
+
+    <!-- Self-contained: bundle .NET runtime + WASDK runtime.
+         Folder publish (no SingleFile) avoids XamlCompiler/PublishSingleFile/EnableMsixTooling cascade.
+         Output is larger (~150 MB) but has zero known CI issues with WASDK 1.8. -->
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250228000" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260710003" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.22621.3233" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="2.88.8" />
