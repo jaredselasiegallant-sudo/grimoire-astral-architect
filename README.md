@@ -5,7 +5,7 @@ A cozy base-builder/idle RPG with gesture-based spell casting, familiar bonding,
 ## Tech Stack
 
 - **.NET 8** / **C# 12**
-- **WinUI 3** (Windows App SDK 1.5)
+- **WinUI 3** (Windows App SDK 1.8)
 - **SkiaSharp** for 2D rendering
 - **SQLite** (WAL mode) for persistence
 - **CommunityToolkit.Mvvm** for data binding
@@ -15,8 +15,9 @@ A cozy base-builder/idle RPG with gesture-based spell casting, familiar bonding,
 1. Go to the [Releases](https://github.com/jaredselasiegallant-sudo/grimoire-astral-architect/releases) page.
 2. Download `Grimoire-Astral-Architect-win-x64.zip` from the latest release.
 3. Extract the zip to a folder of your choice (e.g. `C:\Games\Grimoire`).
-4. Run `Grimoire.App.exe`.
-5. If Windows SmartScreen shows a warning, click **More info** → **Run anyway**. The build is unsigned — this is expected.
+4. **Important: Unblock the files** — right-click `Grimoire.App.exe` → Properties → check **Unblock** → OK. (Windows blocks DLLs from internet downloads, which prevents WinUI 3 from loading.)
+5. Run `Grimoire.App.exe`.
+6. If Windows SmartScreen shows a warning, click **More info** → **Run anyway**.
 
 No installation required. The app is fully self-contained (no .NET runtime download needed).
 
