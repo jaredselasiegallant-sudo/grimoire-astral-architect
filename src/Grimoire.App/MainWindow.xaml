@@ -58,7 +58,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- ── Game Canvas (SkiaSharp) ─────────────────────────── -->
-            <skia:SKCanvasView Grid.Column="0" x:Name="SKCanvasView"
+            <skia:SKXamlCanvas Grid.Column="0" x:Name="SKCanvasView"
                                PaintSurface="SKCanvasView_PaintSurface"
                                EnableTouchEvents="True"
                                Background="#050510"
