@@ -25,15 +25,27 @@ public sealed class GestureRecognitionEngine
     public int InterpolationSteps { get; set; } = 4;
 
     private readonly List<Vector2> _rawPoints = [];
+    private List<float> _lastStrokeDeviations = [];
+    private float _lastStrokeSpeed;
+    private float _lastStrokeDuration;
+    private DateTimeOffset _strokeStartTime;
 
-    public void BeginStroke() => _rawPoints.Clear();
+    public void BeginStroke()
+    {
+        _rawPoints.Clear();
+        _strokeStartTime = DateTimeOffset.UtcNow;
+    }
 
     public void AddPoint(Vector2 point) => _rawPoints.Add(point);
 
     public SpellGesture EndStroke()
     {
+        _lastStrokeDuration = (float)(DateTimeOffset.UtcNow - _strokeStartTime).TotalSeconds;
+
         if (_rawPoints.Count < MinPointsForRecognition)
         {
+            _lastStrokeDeviations = [];
+            _lastStrokeSpeed = 0;
             _rawPoints.Clear();
             return SpellGesture.Unknown;
         }
@@ -50,9 +62,20 @@ public sealed class GestureRecognitionEngine
         // Step 4: Classify
         var gesture = Classify(normalised);
 
+        // Record quality metrics
+        var totalLen = PathLength(_rawPoints);
+        _lastStrokeSpeed = _lastStrokeDuration > 0 ? totalLen / _lastStrokeDuration : 0;
+        _lastStrokeDeviations = _rawPoints
+            .Select((p, i) => i == 0 ? 0f : Vector2.Distance(p, _rawPoints[i - 1]))
+            .ToList();
+
         _rawPoints.Clear();
         return gesture;
     }
+
+    public IReadOnlyList<float> GetLastStrokeDeviations() => _lastStrokeDeviations.AsReadOnly();
+    public float GetLastStrokeSpeed() => _lastStrokeSpeed;
+    public float GetLastStrokeDuration() => _lastStrokeDuration;
 
     public IReadOnlyList<Vector2> GetCurrentStroke() => _rawPoints.AsReadOnly();
 

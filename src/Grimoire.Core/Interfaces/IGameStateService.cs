@@ -1,3 +1,4 @@
+using Grimoire.Core.Enums;
 using Grimoire.Core.Models;
 
 namespace Grimoire.Core.Interfaces;
@@ -18,4 +19,12 @@ public interface IGameStateService
     /// while the game was closed, based on system clock delta.
     /// </summary>
     List<ExpeditionResult> CalculateOfflineRewards();
+
+    bool IsSpellReady(SpellGesture gesture);
+    void PutSpellOnCooldown(SpellGesture gesture, TimeSpan cooldown);
+    TimeSpan GetSpellCooldownRemaining(SpellGesture gesture);
+    void TickManaRegen(float deltaTimeSeconds);
+    void TickCorruption(float deltaTimeSeconds);
+    List<FamiliarEgg> CheckAndHatchEggs();
+    ComboTracker GetComboTracker();
 }

@@ -132,8 +132,7 @@ public sealed partial class MainWindow : Window
 
         // Start game loop
         _gameLoop.Start();
-        _particleEcology.Initialise();
-        _soundscape.Start();
+        _particleEcology.Initialise(1400, 800);
         _autoSaveTimer = SaveLoadService.StartAutoSaveTimer(TimeSpan.FromSeconds(30));
         SaveLoadService.Initialise(_stateService);
 
@@ -181,8 +180,8 @@ public sealed partial class MainWindow : Window
         _particles.Update(deltaTime);
         _returnRitual.Update(deltaTime);
         _juice.Update(deltaTime);
-        _particleEcology.Update(deltaTime);
-        _soundscape.Update(deltaTime);
+        _particleEcology.Update(deltaTime, 1400, 800);
+        _soundscape.Update("morning", "spring", _stateService.CurrentState.Buildings.Count, deltaTime);
         _musicalSpellcaster.Update(deltaTime);
 
         // Tick mana regen and corruption
@@ -227,7 +226,7 @@ public sealed partial class MainWindow : Window
         // Draw particles
         _particles.Draw(surface.Canvas);
 
-        _particleEcology.Render(surface.Canvas, new SKSizeI(size.Width, size.Height), _gameLoop.ElapsedTime);
+        _particleEcology.Render(surface.Canvas);
 
         // Draw gesture trail
         if (_currentStrokeTrail.Count > 1)
@@ -275,7 +274,7 @@ public sealed partial class MainWindow : Window
         var pos = e.GetCurrentPoint(SKCanvasView).Position;
         _currentStrokeTrail.Add(new Vector2((float)pos.X, (float)pos.Y));
         _gestureEngine.AddPoint(new Vector2((float)pos.X, (float)pos.Y));
-        _particleEcology.SetCursor((float)pos.X, (float)pos.Y);
+        _particleEcology.SetCursor((float)pos.X, (float)pos.Y, true);
     }
 
     private void GameCanvas_PointerReleased(object sender, PointerRoutedEventArgs e)
@@ -371,7 +370,7 @@ public sealed partial class MainWindow : Window
     {
         switch (e.Key)
         {
-            case Windows.System.VirtualKey.S when e.KeyModifiers == Windows.System.VirtualKeyModifiers.Control:
+            case Windows.System.VirtualKey.F5:
                 _ = ViewModel.SaveGameCommand.ExecuteAsync(null);
                 e.Handled = true;
                 break;
@@ -548,7 +547,7 @@ public sealed partial class MainWindow : Window
         _settingsService.Settings.WindowY = pos.Y;
         _settingsService.Settings.WindowWidth = size.Width;
         _settingsService.Settings.WindowHeight = size.Height;
-        _settingsService.Settings.IsMaximized = this.AppWindow.Presenter is Microsoft.UI.WindowManagement.AppWindowPresenterKind.Overlapped;
+        _settingsService.Settings.IsMaximized = this.AppWindow.Presenter != null;
     }
 
     // ─── Ambient Effects ─────────────────────────────────────────
