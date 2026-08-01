@@ -60,10 +60,8 @@
             <!-- ── Game Canvas (SkiaSharp) ─────────────────────────── -->
             <skia:SKXamlCanvas Grid.Column="0" x:Name="SKCanvasView"
                                PaintSurface="SKCanvasView_PaintSurface"
-                               EnableTouchEvents="True"
                                Background="#050510"
                                Margin="4"
-                               CornerRadius="8"
                                PointerPressed="GameCanvas_PointerPressed"
                                PointerMoved="GameCanvas_PointerMoved"
                                PointerReleased="GameCanvas_PointerReleased" />
