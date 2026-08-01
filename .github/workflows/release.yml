@@ -18,8 +18,8 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore
-        run: dotnet restore src/Grimoire.App/Grimoire.App.csproj
+      - name: Restore (pin to win-x64 to prevent win10-* RID injection)
+        run: dotnet restore src/Grimoire.App/Grimoire.App.csproj -p:RuntimeIdentifiers=win-x64
 
       - name: Publish win-x64
         run: >
@@ -27,6 +27,7 @@ jobs:
           -c Release
           -r win-x64
           --self-contained true
+          --no-restore
           -p:PublishSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
           -o ./publish
