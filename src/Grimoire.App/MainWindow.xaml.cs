@@ -22,7 +22,6 @@ using Grimoire.Engine.Input;
 using Grimoire.Engine.Rendering;
 using Grimoire.Engine.Juice;
 using Grimoire.Core.Buildings;
-using Grimoire.Core.Models;
 using Grimoire.Engine.Ecology;
 using Grimoire.Engine.Audio;
 using Grimoire.Core.Input;
@@ -34,7 +33,6 @@ namespace Grimoire.App;
 
 public sealed partial class MainWindow : Window
 {
-    // ─── Core services ───────────────────────────────────────────
     private readonly IGameStateService _stateService;
     private readonly NarrativeService _narrativeService;
     private readonly TutorialService _tutorialService;
@@ -42,7 +40,6 @@ public sealed partial class MainWindow : Window
     private readonly ISettingsService _settingsService;
     private readonly GameRepository _repository;
 
-    // ─── Engine ──────────────────────────────────────────────────
     private readonly GameLoopService _gameLoop;
     private readonly GameCanvas _renderer;
     private readonly ParticleSystem _particles;
@@ -50,13 +47,12 @@ public sealed partial class MainWindow : Window
     private readonly ReturnRitual _returnRitual;
     private readonly PhotoMode _photoMode;
     private readonly JuiceEngine _juice;
-    private readonly Grimoire.Engine.Ecology.ParticleEcology _particleEcology = new();
-    private readonly Grimoire.Engine.Audio.AmbientSoundscape _soundscape = new();
-    private readonly Grimoire.Engine.Audio.MusicalSpellcaster _musicalSpellcaster = new();
-    private readonly Grimoire.Core.Input.GestureMastery _gestureMastery = new();
+    private readonly ParticleEcology _particleEcology = new();
+    private readonly AmbientSoundscape _soundscape = new();
+    private readonly MusicalSpellcaster _musicalSpellcaster = new();
+    private readonly GestureMastery _gestureMastery = new();
     private Timer? _autoSaveTimer;
 
-    // ─── State ───────────────────────────────────────────────────
     private MainViewModel ViewModel { get; }
     private readonly List<Vector2> _currentStrokeTrail = [];
     private bool _narrativeActive;
@@ -65,18 +61,14 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
-
-        // WinUI 3: set size via code-behind (not valid in XAML)
         this.AppWindow.Resize(new Windows.Graphics.SizeInt32(1400, 800));
 
-        // Database path
         var dbDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "GrimoireAstralArchitect");
         Directory.CreateDirectory(dbDir);
         var dbPath = Path.Combine(dbDir, "grimoire.db");
 
-        // Services
         _repository = new GameRepository(dbPath);
         _stateService = new GameStateService(_repository);
         _narrativeService = new NarrativeService();
@@ -85,10 +77,8 @@ public sealed partial class MainWindow : Window
         _settingsService = new SettingsService();
         _settingsService.Load();
 
-        // ViewModels
         ViewModel = new MainViewModel(_stateService);
 
-        // Engine
         _renderer = new GameCanvas();
         _particles = new ParticleSystem();
         _gameLoop = new GameLoopService { TargetFps = _settingsService.Settings.TargetFps };
@@ -97,7 +87,6 @@ public sealed partial class MainWindow : Window
         _photoMode = new PhotoMode();
         _juice = new JuiceEngine();
 
-        // Events
         _gameLoop.FrameTick += OnFrameTick;
         _narrativeService.OnNarrativeReady += OnNarrativeReady;
         _narrativeService.OnChapterCompleted += OnChapterCompleted;
@@ -108,11 +97,8 @@ public sealed partial class MainWindow : Window
         this.Closed += OnWindowClosed;
         this.Activated += OnWindowActivated;
 
-        // Restore window position
         RestoreWindowState();
     }
-
-    // ─── Lifecycle ───────────────────────────────────────────────
 
     private async void OnWindowActivated(object sender, WindowActivatedEventArgs args)
     {
@@ -126,30 +112,25 @@ public sealed partial class MainWindow : Window
         ViewModel.FamiliarManagement.LoadFrom(_stateService.CurrentState.Familiars);
         ViewModel.CraftingCauldron.LoadFrom(_stateService.CurrentState.Inventory);
 
-        // Restore narrative and tutorial progress
         _narrativeService.RestoreShownLines(_stateService.CurrentState.ShownNarrativeLines);
         _tutorialService.RestoreProgress(_stateService.CurrentState.CompletedTutorialSteps);
 
-        // Start game loop
         _gameLoop.Start();
         _particleEcology.Initialise(1400, 800);
         _autoSaveTimer = SaveLoadService.StartAutoSaveTimer(TimeSpan.FromSeconds(30));
         SaveLoadService.Initialise(_stateService);
 
-        // Start return ritual on first launch
-        if (!_gameLoop.IsRunning) return; // guard against double-fire
+        if (!_gameLoop.IsRunning) return;
         _returnRitual.Start();
         _returnRitual.OnRitualComplete += () =>
         {
             _ = DispatcherQueue.TryEnqueue(() =>
             {
-                // Trigger prologue if first launch
                 if (_stateService.CurrentState.ExpeditionLog.Count == 0 &&
                     !_stateService.CurrentState.TutorialCompleted)
                 {
                     _narrativeService.FireEvent("game_launch");
                 }
-                // Show active astral events
                 foreach (var evt in _stateService.CurrentState.ActiveEvents.Where(e => e.IsActive))
                 {
                     _notificationService.Show("Astral Event", $"{evt.Name} — {evt.Description}",
@@ -165,7 +146,6 @@ public sealed partial class MainWindow : Window
         _autoSaveTimer?.Dispose();
         await _gameLoop.StopAsync();
 
-        // Persist window state
         SaveWindowState();
         _settingsService.Save();
 
@@ -184,11 +164,9 @@ public sealed partial class MainWindow : Window
         _soundscape.Update("morning", "spring", _stateService.CurrentState.Buildings.Count, deltaTime);
         _musicalSpellcaster.Update(deltaTime);
 
-        // Tick mana regen and corruption
         _stateService.TickManaRegen(deltaTime);
         _stateService.TickCorruption(deltaTime);
 
-        // Check egg hatching
         var hatchedEggs = _stateService.CheckAndHatchEggs();
         foreach (var egg in hatchedEggs)
         {
@@ -197,12 +175,25 @@ public sealed partial class MainWindow : Window
             _juice.OnHatch();
         }
 
-        // Update cooldown display
         _ = DispatcherQueue.TryEnqueue(() =>
         {
-            ViewModel.UpdateCooldownDisplay(_stateService);
+            UpdateUI();
             SKCanvasView?.Invalidate();
         });
+    }
+
+    private void UpdateUI()
+    {
+        ManaText.Text = _stateService.CurrentState.ManaCrystals.ToString();
+
+        var onCooldown = Enum.GetValues<SpellGesture>()
+            .Where(g => g != SpellGesture.Unknown)
+            .Where(g => !_stateService.IsSpellReady(g))
+            .ToList();
+
+        CooldownText.Text = onCooldown.Count > 0
+            ? $"\u23F3 {_stateService.GetSpellCooldownRemaining(onCooldown[0]):mm\\:ss}"
+            : "";
     }
 
     private void SKCanvasView_PaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -210,11 +201,9 @@ public sealed partial class MainWindow : Window
         var surface = e.Surface;
         var size = e.Info.Size;
 
-        // Apply screen shake offset
         var shake = _juice.ShakeOffset;
         surface.Canvas.Translate(shake.X, shake.Y);
 
-        // Render game world
         _renderer.Render(surface.Canvas, new SKSizeI(size.Width, size.Height),
             _gameLoop.ElapsedTime,
             _stateService.CurrentState.Buildings,
@@ -223,22 +212,15 @@ public sealed partial class MainWindow : Window
             _stateService.CurrentState.Weather,
             _stateService.CurrentState.Constellations);
 
-        // Draw particles
         _particles.Draw(surface.Canvas);
-
         _particleEcology.Render(surface.Canvas);
 
-        // Draw gesture trail
         if (_currentStrokeTrail.Count > 1)
             _renderer.SetGestureTrail(_currentStrokeTrail);
 
-        // Return ritual overlay
         _returnRitual.Render(surface.Canvas, size.Width, size.Height, _gameLoop.ElapsedTime);
-
-        // Photo mode overlay
         _photoMode.RenderOverlay(surface.Canvas, size.Width, size.Height);
 
-        // Colour flash overlay
         if (_juice.IsFlashing)
         {
             using var flashPaint = new SKPaint
@@ -249,7 +231,6 @@ public sealed partial class MainWindow : Window
             surface.Canvas.DrawRect(0, 0, size.Width, size.Height, flashPaint);
         }
 
-        // Reset shake transform
         surface.Canvas.Translate(-shake.X, -shake.Y);
     }
 
@@ -284,30 +265,26 @@ public sealed partial class MainWindow : Window
         var gesture = _gestureEngine.EndStroke();
         var pos = e.GetCurrentPoint(SKCanvasView).Position;
 
-        // Record gesture quality for mastery
-        var qualityRecord = _gestureMastery.RecordAttempt(gesture, 
-            _gestureEngine.GetLastStrokeDeviations().ToArray(), 
+        var qualityRecord = _gestureMastery.RecordAttempt(gesture,
+            _gestureEngine.GetLastStrokeDeviations().ToArray(),
             _gestureEngine.GetLastStrokeSpeed(),
             _gestureEngine.GetLastStrokeDuration());
 
-        // Musical spellcasting
         _musicalSpellcaster.CastSpell(gesture);
 
         if (gesture != SpellGesture.Unknown)
         {
-            // Check cooldown
             if (!_stateService.IsSpellReady(gesture))
             {
-                ViewModel.CurrentSpellStatus = $"Spell on cooldown — wait {_stateService.GetSpellCooldownRemaining(gesture):mm\\:ss}";
+                SpellStatusText.Text = $"Spell on cooldown \u2014 wait {_stateService.GetSpellCooldownRemaining(gesture):mm\\:ss}";
                 _currentStrokeTrail.Clear();
                 return;
             }
 
-            // Check mana cost
             var manaCost = GetSpellManaCost(gesture);
             if (_stateService.CurrentState.ManaCrystals < manaCost)
             {
-                ViewModel.CurrentSpellStatus = $"Not enough mana for {gesture} (need {manaCost})";
+                SpellStatusText.Text = $"Not enough mana for {gesture} (need {manaCost})";
                 _currentStrokeTrail.Clear();
                 return;
             }
@@ -316,27 +293,24 @@ public sealed partial class MainWindow : Window
             _stateService.PutSpellOnCooldown(gesture, TimeSpan.FromSeconds(10));
             _stateService.CurrentState.TotalSpellsCast++;
 
-            // Check for combo
             var comboTracker = _stateService.GetComboTracker();
             var combo = comboTracker.AddGesture(gesture);
 
             if (combo is not null)
             {
-                // Combo completed!
-                ViewModel.CurrentSpellStatus = $"COMBO: {combo.Name} — {combo.Description}";
+                SpellStatusText.Text = $"COMBO: {combo.Name} \u2014 {combo.Description}";
                 _juice.OnComboComplete();
                 _notificationService.Show("Spell Combo", combo.Name, NotificationType.Success, 3f);
             }
             else
             {
-                ViewModel.CurrentSpellStatus = GetSpellDescription(gesture);
+                SpellStatusText.Text = GetSpellDescription(gesture);
                 _juice.OnSpellCast(gesture.ToString());
             }
 
             if (qualityRecord.AverageQuality > 0.7f)
-                ViewModel.CurrentSpellStatus += $" (Quality: {qualityRecord.Tier})";
+                SpellStatusText.Text += $" (Quality: {qualityRecord.Tier})";
 
-            // Particle burst
             var color = gesture switch
             {
                 SpellGesture.Circle => new SKColor(100, 200, 255),
@@ -348,16 +322,14 @@ public sealed partial class MainWindow : Window
             };
             _particles.Burst((float)pos.X, (float)pos.Y, color, count: 30, speed: 150f);
 
-            // Tutorial trigger
             if (gesture == SpellGesture.Circle)
                 _tutorialService.TryCompleteStep("circle_gesture");
 
-            // Narrative trigger
             _narrativeService.FireEvent("first_spell_cast");
         }
         else
         {
-            ViewModel.CurrentSpellStatus = "Gesture not recognised — try again";
+            SpellStatusText.Text = "Gesture not recognised \u2014 try again";
         }
 
         _currentStrokeTrail.Clear();
@@ -386,6 +358,30 @@ public sealed partial class MainWindow : Window
                 e.Handled = true;
                 break;
         }
+    }
+
+    // ─── Button Click Handlers ───────────────────────────────────
+
+    private void CraftButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CraftingCauldron.CraftCommand.Execute(null);
+        CraftingResultText.Text = ViewModel.CraftingCauldron.CraftingResult;
+    }
+
+    private void ClearButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CraftingCauldron.ClearSlotsCommand.Execute(null);
+        CraftingResultText.Text = ViewModel.CraftingCauldron.CraftingResult;
+    }
+
+    private void SendExpedition_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.FamiliarManagement.SendOnExpeditionCommand.Execute(null);
+    }
+
+    private void RecallFamiliar_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.FamiliarManagement.RecallFamiliarCommand.Execute(null);
     }
 
     // ─── Narrative Overlay ───────────────────────────────────────
@@ -428,8 +424,6 @@ public sealed partial class MainWindow : Window
         if (_pendingNarrativeLine is not null)
         {
             _narrativeService.MarkLineShown(_pendingNarrativeLine.Id);
-
-            // Persist
             _stateService.CurrentState.ShownNarrativeLines.Add(_pendingNarrativeLine.Id);
             _pendingNarrativeLine = null;
         }
@@ -437,7 +431,6 @@ public sealed partial class MainWindow : Window
         _narrativeActive = false;
         NarrativeOverlay.Visibility = Visibility.Collapsed;
 
-        // Check for queued follow-up
         var next = _narrativeService.GetNextPending();
         if (next is not null)
         {
@@ -512,7 +505,6 @@ public sealed partial class MainWindow : Window
         border.Child = stack;
         ToastContainer.Children.Add(border);
 
-        // Auto-remove after duration
         var timer = new Timer(_ =>
         {
             _ = DispatcherQueue.TryEnqueue(() =>
@@ -579,11 +571,11 @@ public sealed partial class MainWindow : Window
 
     private static string GetSpellDescription(SpellGesture gesture) => gesture switch
     {
-        SpellGesture.Circle => "Circle of Warding cast — protective barrier active",
-        SpellGesture.Triangle => "Triangle of Binding cast — essence trapped",
-        SpellGesture.Line => "Line of Division cast — obstacles cleaved",
-        SpellGesture.Zigzag => "Zigzag of Disruption cast — area scattered",
-        SpellGesture.Spiral => "Spiral of Unravelling cast — hidden loot revealed",
+        SpellGesture.Circle => "Circle of Warding cast \u2014 protective barrier active",
+        SpellGesture.Triangle => "Triangle of Binding cast \u2014 essence trapped",
+        SpellGesture.Line => "Line of Division cast \u2014 obstacles cleaved",
+        SpellGesture.Zigzag => "Zigzag of Disruption cast \u2014 area scattered",
+        SpellGesture.Spiral => "Spiral of Unravelling cast \u2014 hidden loot revealed",
         _ => "Spell cast"
     };
 }

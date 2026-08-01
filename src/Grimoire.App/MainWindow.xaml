@@ -13,7 +13,7 @@
             <RowDefinition Height="140" />
         </Grid.RowDefinitions>
 
-        <!-- ═══ TOP BAR ═══════════════════════════════════════════════ -->
+        <!-- TOP BAR -->
         <Grid Grid.Row="0" Background="{ThemeResource PanelBackgroundBrush}"
               BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="0,0,0,1"
               Padding="16,0">
@@ -30,33 +30,33 @@
                        FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
 
             <!-- Spell status -->
-            <TextBlock Grid.Column="2"
-                       Text="{x:Bind ViewModel.CurrentSpellStatus, Mode=OneWay}"
+            <TextBlock x:Name="SpellStatusText" Grid.Column="2"
+                       Text="Draw a shape to cast a spell"
                        Foreground="{ThemeResource TextSecondaryBrush}"
                        FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
 
             <!-- Cooldown indicator -->
-            <TextBlock Grid.Column="3"
-                       Text="{x:Bind ViewModel.CooldownDisplay, Mode=OneWay}"
+            <TextBlock x:Name="CooldownText" Grid.Column="3"
+                       Text=""
                        Foreground="{ThemeResource AccentBrush}"
                        FontSize="11" VerticalAlignment="Center" Margin="12,0" />
 
             <!-- Mana counter -->
             <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
                 <TextBlock Text="&#x2726;" Foreground="{ThemeResource GlowPurpleBrush}" FontSize="18" VerticalAlignment="Center" />
-                <TextBlock Text="{x:Bind ViewModel.ManaCrystals, Mode=OneWay}"
+                <TextBlock x:Name="ManaText" Text="0"
                            Foreground="{ThemeResource TextPrimaryBrush}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
             </StackPanel>
         </Grid>
 
-        <!-- ═══ MAIN CONTENT ═════════════════════════════════════════ -->
+        <!-- MAIN CONTENT -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="320" />
             </Grid.ColumnDefinitions>
 
-            <!-- ── Game Canvas (SkiaSharp) ─────────────────────────── -->
+            <!-- Game Canvas (SkiaSharp) -->
             <skia:SKXamlCanvas Grid.Column="0" x:Name="SKCanvasView"
                                PaintSurface="SKCanvasView_PaintSurface"
                                Background="#050510"
@@ -65,7 +65,7 @@
                                PointerMoved="GameCanvas_PointerMoved"
                                PointerReleased="GameCanvas_PointerReleased" />
 
-            <!-- ── Right Panel ─────────────────────────────────────── -->
+            <!-- Right Panel -->
             <Grid Grid.Column="1" Margin="0,4,4,4">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
@@ -86,7 +86,7 @@
                         <TextBlock Grid.Row="0" Text="INVENTORY"
                                    Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,8" />
-                        <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Inventory.Items}"
+                        <ListView x:Name="InventoryList" Grid.Row="1"
                                   Background="Transparent">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
@@ -124,18 +124,18 @@
                         <TextBlock Grid.Row="0" Text="ALCHEMICAL CAULDRON"
                                    Foreground="{ThemeResource GlowPurpleBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,12" />
-                        <TextBlock Grid.Row="1"
-                                   Text="{x:Bind ViewModel.CraftingCauldron.CraftingResult, Mode=OneWay}"
+                        <TextBlock x:Name="CraftingResultText" Grid.Row="1"
+                                   Text="Place two items in the cauldron to craft"
                                    Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
-                        <Button Grid.Row="2" Content="&#x26A1; CRAFT" HorizontalAlignment="Stretch"
+                        <Button x:Name="CraftButton" Grid.Row="2" Content="&#x26A1; CRAFT" HorizontalAlignment="Stretch"
                                 Background="{ThemeResource GlowPurpleBrush}" Foreground="White" FontWeight="Bold"
                                 CornerRadius="6" Margin="0,4"
-                                Command="{x:Bind ViewModel.CraftingCauldron.CraftCommand}"
-                                IsEnabled="{x:Bind ViewModel.CraftingCauldron.CanCraft, Mode=OneWay}" />
-                        <Button Grid.Row="3" Content="Clear" HorizontalAlignment="Stretch"
+                                Click="CraftButton_Click"
+                                IsEnabled="False" />
+                        <Button x:Name="ClearButton" Grid.Row="3" Content="Clear" HorizontalAlignment="Stretch"
                                 Background="Transparent" Foreground="{ThemeResource TextSecondaryBrush}"
                                 BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,4"
-                                Command="{x:Bind ViewModel.CraftingCauldron.ClearSlotsCommand}" />
+                                Click="ClearButton_Click" />
                     </Grid>
                 </Border>
 
@@ -153,8 +153,8 @@
                         <TextBlock Grid.Row="0" Text="EXPEDITION LOG"
                                    Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,6" />
-                        <TextBlock Grid.Row="1"
-                                   Text="{x:Bind ViewModel.LastExpeditionLog, Mode=OneWay}"
+                        <TextBlock x:Name="ExpeditionLogText" Grid.Row="1"
+                                   Text="No expeditions yet"
                                    Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11"
                                    TextWrapping="Wrap" Opacity="0.8" />
                     </Grid>
@@ -162,7 +162,7 @@
             </Grid>
         </Grid>
 
-        <!-- ═══ BOTTOM BAR: FAMILIARS ════════════════════════════════ -->
+        <!-- BOTTOM BAR: FAMILIARS -->
         <Border Grid.Row="2" Background="{ThemeResource PanelBackgroundBrush}"
                 BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
@@ -173,11 +173,11 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="FAMILIARS"
-                           Foreground="{ThemeResource GlowCyanBrush}"                            FontSize="12" FontWeight="Bold"
+                           Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                            VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                    <ItemsControl ItemsSource="{x:Bind ViewModel.FamiliarManagement.Familiars}">
+                    <ItemsControl x:Name="FamiliarsList">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="8" /></ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
@@ -199,21 +199,21 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
                     <Button Content="&#x1F680; Send" Background="{ThemeResource GlowCyanBrush}"
                             Foreground="#0A0A1A" FontWeight="SemiBold" CornerRadius="6" Padding="12,6"
-                            Command="{x:Bind ViewModel.FamiliarManagement.SendOnExpeditionCommand}" />
+                            Click="SendExpedition_Click" />
                     <Button Content="&#x1F4DE; Recall" Background="Transparent"
                             Foreground="{ThemeResource AccentBrush}" BorderBrush="{ThemeResource AccentBrush}"
                             BorderThickness="1" CornerRadius="6" Padding="12,6"
-                            Command="{x:Bind ViewModel.FamiliarManagement.RecallFamiliarCommand}" />
+                            Click="RecallFamiliar_Click" />
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- ═══ NOTIFICATION TOAST OVERLAY ══════════════════════════ -->
+        <!-- NOTIFICATION TOAST OVERLAY -->
         <StackPanel x:Name="ToastContainer" Grid.Row="0" Grid.RowSpan="3"
                     VerticalAlignment="Top" HorizontalAlignment="Right"
                     Margin="0,56,24,0" Spacing="8" IsHitTestVisible="False" />
 
-        <!-- ═══ NARRATIVE OVERLAY ═══════════════════════════════════ -->
+        <!-- NARRATIVE OVERLAY -->
         <Border x:Name="NarrativeOverlay" Grid.Row="0" Grid.RowSpan="3"
                 Background="#CC0A0A1A" Visibility="Collapsed"
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
