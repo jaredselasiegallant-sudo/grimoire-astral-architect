@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="Grimoire.App.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Grimoire.App">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Global dark theme brushes -->
+            <SolidColorBrush x:Key="GameBackgroundBrush" Color="#0A0A1A" />
+            <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#12122A" />
+            <SolidColorBrush x:Key="PanelBorderBrush" Color="#2A2A5A" />
+            <SolidColorBrush x:Key="GlowCyanBrush" Color="#64C8FF" />
+            <SolidColorBrush x:Key="GlowPurpleBrush" Color="#A064FF" />
+            <SolidColorBrush x:Key="TextPrimaryBrush" Color="#DCE4FF" />
+            <SolidColorBrush x:Key="TextSecondaryBrush" Color="#8090B8" />
+            <SolidColorBrush x:Key="AccentBrush" Color="#FF6AAE" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>
