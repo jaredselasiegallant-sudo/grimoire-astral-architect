@@ -30,7 +30,7 @@ public partial class App : Application
         }
     }
 
-    private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
     {
         LogCrash("UnhandledException", e.Exception);
         e.Handled = true;
