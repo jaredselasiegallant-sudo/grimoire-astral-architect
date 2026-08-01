@@ -60,9 +60,10 @@ dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
 The GitHub Actions workflow (`.github/workflows/release.yml`) triggers on `v*.*.*` tags:
 
 1. **Checkout** → **Setup .NET 8** → **dotnet publish** (self-contained folder, `-v normal`)
-2. **Verify publish output** — checks `Grimoire.App.exe` exists and is > 1 MB
-3. **Smoke test** — launches the exe, waits 5 seconds, confirms it started (non-zero exit code is expected on headless CI)
+2. **Verify publish output** — checks `Grimoire.App.exe`, WASDK runtime DLLs, and SkiaSharp native
+3. **Smoke test** — launches the exe, waits 5 seconds, checks for crash logs
 4. **Zip** → **Create GitHub Release**
+5. (Optional) **SignPath signing** — signs the exe if SignPath is configured
 
 ### Upgrading WASDK
 
@@ -79,3 +80,50 @@ dotnet publish src/Grimoire.App/Grimoire.App.csproj -c Release -r win-x64 --self
 ```
 
 Output: `./publish/Grimoire.App.exe` + dependencies.
+
+## Code Signing
+
+### Option 1: SignPath Foundation (Free for Open Source)
+
+SignPath provides free code signing for qualifying open-source projects.
+
+**Setup steps:**
+
+1. **Apply at** https://signpath.io/foundation — register your GitHub repo
+2. **Create a GitHub repository secret** named `SIGNPATH_API_TOKEN` with your SignPath API token
+3. **Create GitHub repository variables:**
+   - `SIGNPATH_ORG_ID` — your SignPath organization ID
+   - `SIGNING_CONFIGURATION_ID` — the signing configuration to use (from SignPath dashboard)
+4. **Uncomment the SignPath step** in `.github/workflows/release.yml`
+5. **Tag and push** — the CI will sign the exe before uploading
+
+**Requirements:**
+- Public GitHub repository (ours is public ✓)
+- Non-commercial / open-source project
+- Code must be buildable from source (ours is ✓)
+
+### Option 2: Self-Signed Certificate (Development)
+
+For local testing only. Will trigger SmartScreen warnings for users.
+
+```powershell
+# Generate self-signed cert (run as Admin)
+$cert = New-SelfSignedCertificate `
+  -Subject "CN=Grimoire Astral Architect" `
+  -Type CodeSigningCert `
+  -CertStoreLocation Cert:\CurrentUser\My `
+  -NotAfter (Get-Date).AddYears(2)
+
+# Export PFX
+$pfxPath = "$env:USERPROFILE\grimoire-signing.pfx"
+Export-PfxCertificate -Cert $cert -FilePath $pfxPath -Password (ConvertTo-SecureString -String "password" -Force -AsPlainText)
+```
+
+### Option 3: Commercial OV Certificate
+
+Purchased from a Certificate Authority (DigiCert, Sectigo, GlobalSign). ~$150-300/year.
+
+```bash
+# Sign with signtool.exe (from Windows SDK)
+signtool.exe sign /f grimoire-signing.pfx /p "password" /tr http://timestamp.digicert.com /td sha256 /fd sha256 Grimoire.App.exe
+```

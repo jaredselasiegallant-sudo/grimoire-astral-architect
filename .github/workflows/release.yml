@@ -14,6 +14,7 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+      actions: write
 
     steps:
       - name: Checkout
@@ -49,9 +50,28 @@ jobs:
           }
           Write-Host "Publish output contains $((Get-ChildItem ./publish -Recurse | Measure-Object).Count) files"
 
+          # Verify WASDK native DLLs are present
+          $wasdkDll = Get-ChildItem ./publish -Recurse -Filter "Microsoft.WindowsAppSDK*.dll" | Select-Object -First 1
+          if ($wasdkDll) {
+            Write-Host "WASDK runtime found: $($wasdkDll.Name)"
+          } else {
+            Write-Warning "WASDK runtime DLLs not found in publish output"
+          }
+
+          # Verify SkiaSharp native DLL is present
+          $skiaDll = Get-ChildItem ./publish -Recurse -Filter "libSkiaSharp.dll" | Select-Object -First 1
+          if ($skiaDll) {
+            Write-Host "SkiaSharp native found: $($skiaDll.FullName)"
+          } else {
+            Write-Warning "libSkiaSharp.dll not found in publish output"
+          }
+
       - name: Smoke test — launch and wait for exit
         shell: pwsh
         run: |
+          $crashLog = "$env:LOCALAPPDATA\GrimoireAstralArchitect\crash.log"
+          if (Test-Path $crashLog) { Remove-Item $crashLog -Force }
+
           $proc = Start-Process -FilePath "./publish/Grimoire.App.exe" -PassThru -ErrorAction SilentlyContinue
           Start-Sleep -Seconds 5
           if (!$proc.HasExited) {
@@ -61,13 +81,34 @@ jobs:
           } else {
             Write-Host "App exited with code $($proc.ExitCode)"
             if ($proc.ExitCode -ne 0) {
-              Write-Warning "Non-zero exit code $($proc.ExitCode) — may be expected for headless CI (no display)"
+              Write-Warning "Non-zero exit code $($proc.ExitCode)"
             }
           }
-          Write-Host "Smoke test passed"
+
+          # Check for crash logs
+          if (Test-Path $crashLog) {
+            Write-Host "`n=== CRASH LOG ==="
+            Get-Content $crashLog
+            Write-Host "=== END CRASH LOG ==="
+          } else {
+            Write-Host "No crash log generated"
+          }
+          Write-Host "Smoke test completed"
 
       - name: Zip output
         run: Compress-Archive -Path ./publish/* -DestinationPath Grimoire-Astral-Architect-win-x64.zip
+
+      # SignPath signing (requires SignPath Foundation application — see BUILD.md)
+      # Uncomment and set SIGNING_CONFIGURATION_ID after SignPath approval
+      # - name: Sign with SignPath
+      #   uses: signpathio/signpath-github-action@v1
+      #   with:
+      #     api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+      #     organization-id: ${{ vars.SIGNPATH_ORG_ID }}
+      #     project-slug: grimoire-astral-architect
+      #     signing-configuration-id: ${{ vars.SIGNING_CONFIGURATION_ID }}
+      #     artifact: ./publish
+      #     waitForCompletion: true
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
