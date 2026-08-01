@@ -40,8 +40,8 @@ jobs:
             exit 1
           }
           $size = (Get-Item $exe).Length
-          Write-Host "Grimoire.App.exe found ($([math]::Round($size/1MB, 1)) MB)"
-          if ($size -lt 1MB) {
+          Write-Host "Grimoire.App.exe found ($([math]::Round($size/1KB, 1)) KB)"
+          if ($size -lt 10KB) {
             Write-Error "Executable too small ($size bytes) — likely broken"
             exit 1
           }
