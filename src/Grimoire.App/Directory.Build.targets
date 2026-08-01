@@ -1,0 +1,11 @@
+<Project>
+  <!-- Strip win10-* RIDs injected by WindowsAppSDK 1.5 that .NET 8 SDK doesn't recognize -->
+  <Target Name="StripWin10RIDs" BeforeTargets="ProcessFrameworkReferences" Condition="$(RuntimeIdentifiers.Contains('win10-'))">
+    <PropertyGroup>
+      <_CleanedRID>$(RuntimeIdentifiers.Replace('win10-arm64-aot;','').Replace('win10-arm-aot;','').Replace('win10-arm64;','').Replace('win10-arm;','').Replace('win10-x64-aot;','').Replace('win10-x64;','').Replace('win10-x86-aot;','').Replace('win10-x86;',''))</_CleanedRID>
+      <_CleanedRID Condition="$(_CleanedRID.EndsWith(';'))">$(_CleanedRID.TrimEnd(';'))</_CleanedRID>
+      <_CleanedRID Condition="$(_CleanedRID.StartsWith(';'))">$(_CleanedRID.TrimStart(';'))</_CleanedRID>
+      <RuntimeIdentifiers>$(_CleanedRID)</RuntimeIdentifiers>
+    </PropertyGroup>
+  </Target>
+</Project>
