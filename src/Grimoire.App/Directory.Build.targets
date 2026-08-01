@@ -1,9 +1,0 @@
-<Project>
-  <!-- After WASDK 1.5 injects win10-* RIDs, reset RuntimeIdentifiers to only win-x64
-       before ProcessFrameworkReferences tries to resolve them -->
-  <Target Name="FixWin10RIDs" BeforeTargets="ProcessFrameworkReferences" AfterTargets="ResolveAssemblyReferences">
-    <PropertyGroup>
-      <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    </PropertyGroup>
-  </Target>
-</Project>

@@ -23,8 +23,12 @@ jobs:
           dotnet publish src/Grimoire.App/Grimoire.App.csproj
           -c Release
           -r win-x64
+          -p:Platform=x64
           --self-contained true
-          -p:WindowsAppSDKSelfContained=false
+          -p:PublishSingleFile=true
+          -p:EnableMsixTooling=true
+          -p:WindowsAppSDKSelfContained=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
           -o ./publish
 
       - name: Zip output
