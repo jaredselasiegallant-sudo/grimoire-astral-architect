@@ -5,13 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:skia="using:SkiaSharp.Views.WinUI"
     Title="Grimoire: Astral Architect"
-    Width="1400" Height="800"
-    MinWidth="1024" MinHeight="600"
-    Background="{ThemeResource GameBackgroundBrush}"
-    ExtendsContentIntoTitleBar="True"
-    KeyDown="MainWindow_KeyDown">
+    ExtendsContentIntoTitleBar="True">
 
-    <Grid Padding="0">
+    <Grid Padding="0" IsTabStop="True" KeyDown="MainWindow_KeyDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
@@ -92,7 +88,7 @@
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="INVENTORY"
                                    Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
-                                   LetterSpacing="2" Margin="0,0,0,8" />
+                                   Margin="0,0,0,8" />
                         <ListView Grid.Row="1" ItemsSource="{x:Bind ViewModel.Inventory.Items}"
                                   Background="Transparent">
                             <ListView.ItemTemplate>
@@ -116,7 +112,7 @@
                     </Grid>
                 </Border>
 
-                <GridSplitter Grid.Row="1" HorizontalAlignment="Stretch" Background="Transparent" />
+                <Border Grid.Row="1" Background="Transparent" />
 
                 <!-- Cauldron -->
                 <Border Grid.Row="2" Background="{ThemeResource PanelBackgroundBrush}"
@@ -130,7 +126,7 @@
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="ALCHEMICAL CAULDRON"
                                    Foreground="{ThemeResource GlowPurpleBrush}" FontSize="12" FontWeight="Bold"
-                                   LetterSpacing="2" Margin="0,0,0,12" />
+                                   Margin="0,0,0,12" />
                         <TextBlock Grid.Row="1"
                                    Text="{x:Bind ViewModel.CraftingCauldron.CraftingResult, Mode=OneWay}"
                                    Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
@@ -146,7 +142,7 @@
                     </Grid>
                 </Border>
 
-                <GridSplitter Grid.Row="3" HorizontalAlignment="Stretch" Background="Transparent" />
+                <Border Grid.Row="3" Background="Transparent" />
 
                 <!-- Expedition Log -->
                 <Border Grid.Row="4" Background="{ThemeResource PanelBackgroundBrush}"
@@ -159,7 +155,7 @@
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="EXPEDITION LOG"
                                    Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
-                                   LetterSpacing="2" Margin="0,0,0,6" />
+                                   Margin="0,0,0,6" />
                         <TextBlock Grid.Row="1"
                                    Text="{x:Bind ViewModel.LastExpeditionLog, Mode=OneWay}"
                                    Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11"
@@ -180,8 +176,8 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="FAMILIARS"
-                           Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
-                           LetterSpacing="2" VerticalAlignment="Center" Margin="0,0,16,0" />
+                           Foreground="{ThemeResource GlowCyanBrush}"                            FontSize="12" FontWeight="Bold"
+                           VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                     <ItemsControl ItemsSource="{x:Bind ViewModel.FamiliarManagement.Familiars}">
@@ -229,7 +225,7 @@
                 <StackPanel Spacing="16" HorizontalAlignment="Center">
                     <TextBlock x:Name="NarrativeSpeaker" Text=""
                                Foreground="{ThemeResource GlowPurpleBrush}"
-                               FontSize="12" FontWeight="Bold" LetterSpacing="4"
+                               FontSize="12" FontWeight="Bold"
                                HorizontalAlignment="Center" />
                     <TextBlock x:Name="NarrativeText" Text=""
                                Foreground="{ThemeResource TextPrimaryBrush}"

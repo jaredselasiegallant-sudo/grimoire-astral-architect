@@ -66,6 +66,9 @@ public sealed partial class MainWindow : Window
     {
         this.InitializeComponent();
 
+        // WinUI 3: set size via code-behind (not valid in XAML)
+        this.AppWindow.Resize(new Windows.Graphics.SizeInt32(1400, 800));
+
         // Database path
         var dbDir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
