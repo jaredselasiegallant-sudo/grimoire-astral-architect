@@ -3,9 +3,11 @@
     x:Class="Grimoire.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Grimoire: Astral Architect">
+    Title="Grimoire: Astral Architect"
+    Width="1400" Height="800"
+    Background="#050510">
 
-    <Grid Padding="0" IsTabStop="True" KeyDown="MainWindow_KeyDown">
+    <Grid KeyDown="MainWindow_KeyDown">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
@@ -13,36 +15,38 @@
         </Grid.RowDefinitions>
 
         <!-- TOP BAR -->
-        <Grid Grid.Row="0" Background="{ThemeResource PanelBackgroundBrush}"
-              BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="0,0,0,1"
-              Padding="16,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="0" Background="{StaticResource PanelBackgroundBrush}"
+                BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1"
+                Padding="16,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="GRIMOIRE: ASTRAL ARCHITECT"
-                       Foreground="{ThemeResource GlowCyanBrush}"
-                       FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="0" Text="GRIMOIRE: ASTRAL ARCHITECT"
+                           Foreground="{StaticResource GlowCyanBrush}"
+                           FontSize="16" FontWeight="Bold" VerticalAlignment="Center" />
 
-            <TextBlock x:Name="SpellStatusText" Grid.Column="1"
-                       Text="Draw a shape to cast a spell"
-                       Foreground="{ThemeResource TextSecondaryBrush}"
-                       FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <TextBlock x:Name="SpellStatusText" Grid.Column="1"
+                           Text="Draw a shape to cast a spell"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="13" VerticalAlignment="Center" HorizontalAlignment="Center" />
 
-            <TextBlock x:Name="CooldownText" Grid.Column="2"
-                       Text=""
-                       Foreground="{ThemeResource AccentBrush}"
-                       FontSize="11" VerticalAlignment="Center" Margin="12,0" />
+                <TextBlock x:Name="CooldownText" Grid.Column="2"
+                           Text=""
+                           Foreground="{StaticResource AccentBrush}"
+                           FontSize="11" VerticalAlignment="Center" Margin="12,0" />
 
-            <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Spacing="8">
-                <TextBlock Text="&#x2726;" Foreground="{ThemeResource GlowPurpleBrush}" FontSize="18" VerticalAlignment="Center" />
-                <TextBlock x:Name="ManaText" Text="0"
-                           Foreground="{ThemeResource TextPrimaryBrush}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
-            </StackPanel>
-        </Grid>
+                <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,4,0">
+                    <TextBlock Text="&#x2726;" Foreground="{StaticResource GlowPurpleBrush}" FontSize="18" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBlock x:Name="ManaText" Text="0"
+                               Foreground="{StaticResource TextPrimaryBrush}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!-- MAIN CONTENT -->
         <Grid Grid.Row="1" x:Name="MainContentGrid">
@@ -51,7 +55,7 @@
                 <ColumnDefinition Width="320" />
             </Grid.ColumnDefinitions>
 
-            <!-- Canvas placeholder - SKXamlCanvas added in code-behind -->
+            <!-- Canvas host - SKElement added in code-behind -->
             <Border Grid.Column="0" x:Name="CanvasHost" Background="#050510" Margin="4" />
 
             <!-- Right Panel -->
@@ -64,25 +68,25 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Border Grid.Row="0" Background="{ThemeResource PanelBackgroundBrush}"
-                        BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Border Grid.Row="0" Background="{StaticResource PanelBackgroundBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="INVENTORY"
-                                   Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,8" />
                         <TextBlock Grid.Row="1" Text="No items yet"
-                                   Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" />
                     </Grid>
                 </Border>
 
                 <Border Grid.Row="1" Background="Transparent" />
 
-                <Border Grid.Row="2" Background="{ThemeResource PanelBackgroundBrush}"
-                        BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
+                <Border Grid.Row="2" Background="{StaticResource PanelBackgroundBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="12">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -90,14 +94,14 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="ALCHEMICAL CAULDRON"
-                                   Foreground="{ThemeResource GlowPurpleBrush}" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource GlowPurpleBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,12" />
                         <TextBlock x:Name="CraftingResultText" Grid.Row="1"
                                    Text="Place two items in the cauldron to craft"
-                                   Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8" />
                         <Button x:Name="CraftButton" Grid.Row="2" Content="&#x26A1; CRAFT" HorizontalAlignment="Stretch"
-                                Background="{ThemeResource GlowPurpleBrush}" Foreground="White" FontWeight="Bold"
-                                CornerRadius="6" Margin="0,4"
+                                Background="{StaticResource GlowPurpleBrush}" Foreground="White" FontWeight="Bold"
+                                Margin="0,4" Padding="8,6"
                                 Click="CraftButton_Click"
                                 IsEnabled="False" />
                     </Grid>
@@ -105,8 +109,8 @@
 
                 <Border Grid.Row="3" Background="Transparent" />
 
-                <Border Grid.Row="4" Background="{ThemeResource PanelBackgroundBrush}"
-                        BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8"
+                <Border Grid.Row="4" Background="{StaticResource PanelBackgroundBrush}"
+                        BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1" CornerRadius="8"
                         Padding="12" MaxHeight="120">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -114,11 +118,11 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <TextBlock Grid.Row="0" Text="EXPEDITION LOG"
-                                   Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
+                                   Foreground="{StaticResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                                    Margin="0,0,0,6" />
                         <TextBlock x:Name="ExpeditionLogText" Grid.Row="1"
                                    Text="No expeditions yet"
-                                   Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"
                                    TextWrapping="Wrap" Opacity="0.8" />
                     </Grid>
                 </Border>
@@ -126,8 +130,8 @@
         </Grid>
 
         <!-- BOTTOM BAR: FAMILIARS -->
-        <Border Grid.Row="2" Background="{ThemeResource PanelBackgroundBrush}"
-                BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="16,8">
+        <Border Grid.Row="2" Background="{StaticResource PanelBackgroundBrush}"
+                BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -135,11 +139,11 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" Text="FAMILIARS"
-                           Foreground="{ThemeResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
+                           Foreground="{StaticResource GlowCyanBrush}" FontSize="12" FontWeight="Bold"
                            VerticalAlignment="Center" Margin="0,0,16,0" />
 
                 <TextBlock Grid.Column="1" Text="No familiars hatched yet"
-                           Foreground="{ThemeResource TextSecondaryBrush}" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"
                            VerticalAlignment="Center" />
             </Grid>
         </Border>
@@ -147,7 +151,7 @@
         <!-- NOTIFICATION TOAST OVERLAY -->
         <StackPanel x:Name="ToastContainer" Grid.Row="0" Grid.RowSpan="3"
                     VerticalAlignment="Top" HorizontalAlignment="Right"
-                    Margin="0,56,24,0" Spacing="8" IsHitTestVisible="False" />
+                    Margin="0,56,24,0" IsHitTestVisible="False" />
 
         <!-- NARRATIVE OVERLAY -->
         <Border x:Name="NarrativeOverlay" Grid.Row="0" Grid.RowSpan="3"
@@ -155,21 +159,21 @@
                 HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
                 Padding="60">
             <Grid VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="800">
-                <StackPanel Spacing="16" HorizontalAlignment="Center">
+                <StackPanel HorizontalAlignment="Center">
                     <TextBlock x:Name="NarrativeSpeaker" Text=""
-                               Foreground="{ThemeResource GlowPurpleBrush}"
+                               Foreground="{StaticResource GlowPurpleBrush}"
                                FontSize="12" FontWeight="Bold"
-                               HorizontalAlignment="Center" />
+                               HorizontalAlignment="Center" Margin="0,0,0,8" />
                     <TextBlock x:Name="NarrativeText" Text=""
-                               Foreground="{ThemeResource TextPrimaryBrush}"
+                               Foreground="{StaticResource TextPrimaryBrush}"
                                FontSize="20" TextWrapping="Wrap"
                                HorizontalAlignment="Center" TextAlignment="Center"
-                               LineHeight="30" />
+                               LineHeight="30" Margin="0,0,0,16" />
                     <Button x:Name="NarrativeDismissButton" Content="Continue"
-                            HorizontalAlignment="Center" Margin="0,16,0,0"
-                            Background="Transparent" Foreground="{ThemeResource TextSecondaryBrush}"
-                            BorderBrush="{ThemeResource PanelBorderBrush}" BorderThickness="1"
-                            CornerRadius="8" Padding="24,8"
+                            HorizontalAlignment="Center" Margin="0,8,0,0"
+                            Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}"
+                            BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="1"
+                            Padding="24,8"
                             Click="NarrativeDismissButton_Click" />
                 </StackPanel>
             </Grid>

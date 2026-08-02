@@ -68,13 +68,13 @@ public static class AstralEventScheduler
 
         // Daily events: 2 selected by date hash
         var dayHash = today.GetHashCode();
-        var daily1 = EventTemplates[dayHash % 5]; // First 5 are daily
-        var daily2 = EventTemplates[(dayHash / 5 + 1) % 5];
+        var daily1 = EventTemplates[PositiveMod(dayHash, 5)]; // First 5 are daily
+        var daily2 = EventTemplates[PositiveMod(dayHash / 5 + 1, 5)];
 
         events.Add(CreateEvent(daily1, today, EventTypeFrequency.Daily));
 
         // Second daily only if hash warrants it (roughly 60% chance)
-        if (dayHash % 10 < 6)
+        if (PositiveMod(dayHash, 10) < 6)
             events.Add(CreateEvent(daily2, today.AddHours(6), EventTypeFrequency.Daily));
 
         // Weekly event: one per week, selected by week number
@@ -92,6 +92,8 @@ public static class AstralEventScheduler
 
         return events;
     }
+
+    private static int PositiveMod(int value, int mod) => ((value % mod) + mod) % mod;
 
     private static AstralEvent CreateEvent(
         (string name, string desc, AstralEventType type, int hours, string tint, EventTypeFrequency freq) template,

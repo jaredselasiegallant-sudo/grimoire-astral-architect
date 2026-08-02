@@ -11,6 +11,9 @@ public interface IGameStateService
 {
     GameState CurrentState { get; }
 
+    /// <summary>True once <see cref="InitialiseAsync"/> has completed.</summary>
+    bool IsInitialised { get; }
+
     Task InitialiseAsync();
     Task SaveAsync();
 

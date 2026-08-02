@@ -29,13 +29,16 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(IGameStateService stateService)
     {
         _stateService = stateService;
-        LoadFromState();
+        RefreshFromState();
     }
 
     // ─── State sync ──────────────────────────────────────────────
 
-    private void LoadFromState()
+    /// <summary>Refreshes bound properties from the current game state.</summary>
+    public void RefreshFromState()
     {
+        if (!_stateService.IsInitialised) return;
+
         var state = _stateService.CurrentState;
         PlayerName = state.PlayerName;
         ManaCrystals = state.ManaCrystals;

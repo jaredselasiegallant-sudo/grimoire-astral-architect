@@ -25,12 +25,22 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build Grimoire.AstralArchitect.sln -c Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test Grimoire.AstralArchitect.sln -c Release --no-build --no-restore
+
       - name: Publish win-x64 (self-contained folder)
         run: >
           dotnet publish src/Grimoire.App/Grimoire.App.csproj
           -c Release
           -r win-x64
           --self-contained true
+          --no-restore
           -v normal
           -o ./publish
 
@@ -50,32 +60,31 @@ jobs:
           }
           Write-Host "Publish output contains $((Get-ChildItem ./publish -Recurse | Measure-Object).Count) files"
 
-          # Verify WASDK native DLLs are present
-          $wasdkDll = Get-ChildItem ./publish -Recurse -Filter "Microsoft.WindowsAppSDK*.dll" | Select-Object -First 1
-          if ($wasdkDll) {
-            Write-Host "WASDK runtime found: $($wasdkDll.Name)"
-          } else {
-            Write-Warning "WASDK runtime DLLs not found in publish output"
-          }
-
-          # Verify SkiaSharp native DLL is present
+          # Verify SkiaSharp native DLL is present (the game canvas depends on it)
           $skiaDll = Get-ChildItem ./publish -Recurse -Filter "libSkiaSharp.dll" | Select-Object -First 1
           if ($skiaDll) {
             Write-Host "SkiaSharp native found: $($skiaDll.FullName)"
           } else {
-            Write-Warning "libSkiaSharp.dll not found in publish output"
+            Write-Error "libSkiaSharp.dll not found in publish output"
+            exit 1
           }
 
-      - name: Smoke test — launch and wait for exit
+          # Verify the managed UI assembly is present
+          if (!(Test-Path "./publish/Grimoire.App.dll")) {
+            Write-Error "Grimoire.App.dll not found in publish output"
+            exit 1
+          }
+
+      - name: Smoke test — launch and wait
         shell: pwsh
         run: |
           $crashLog = "$env:LOCALAPPDATA\GrimoireAstralArchitect\crash.log"
           if (Test-Path $crashLog) { Remove-Item $crashLog -Force }
 
           $proc = Start-Process -FilePath "./publish/Grimoire.App.exe" -PassThru -ErrorAction SilentlyContinue
-          Start-Sleep -Seconds 5
+          Start-Sleep -Seconds 8
           if (!$proc.HasExited) {
-            Write-Host "App started successfully (still running after 5s — killing)"
+            Write-Host "App started successfully (still running after 8s — killing)"
             $proc.Kill()
             $proc.WaitForExit(3000)
           } else {
@@ -85,13 +94,15 @@ jobs:
             }
           }
 
-          # Check for crash logs
+          # Fail the build if the app wrote a crash log
           if (Test-Path $crashLog) {
             Write-Host "`n=== CRASH LOG ==="
             Get-Content $crashLog
             Write-Host "=== END CRASH LOG ==="
+            Write-Error "Crash log generated during smoke test — see above"
+            exit 1
           } else {
-            Write-Host "No crash log generated"
+            Write-Host "No crash log generated — clean launch"
           }
           Write-Host "Smoke test completed"
 

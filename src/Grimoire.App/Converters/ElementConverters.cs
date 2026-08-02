@@ -1,4 +1,5 @@
-using Microsoft.UI.Xaml.Data;
+using System.Globalization;
+using System.Windows.Data;
 using Grimoire.Core.Enums;
 
 namespace Grimoire.App.Converters;
@@ -9,7 +10,7 @@ namespace Grimoire.App.Converters;
 /// </summary>
 public sealed class ElementTypeToColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is ElementType element)
         {
@@ -28,7 +29,7 @@ public sealed class ElementTypeToColorConverter : IValueConverter
         return "#808080";
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
@@ -39,7 +40,7 @@ public sealed class ElementTypeToColorConverter : IValueConverter
 /// </summary>
 public sealed class RarityToStringConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, string language)
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is Rarity rarity)
         {
@@ -56,7 +57,7 @@ public sealed class RarityToStringConverter : IValueConverter
         return "Unknown";
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

@@ -1,38 +1,40 @@
 using System.IO;
-using Microsoft.UI.Xaml;
+using System.Windows;
 
 namespace Grimoire.App;
 
 public partial class App : Application
 {
-    private Window? _window;
+    private MainWindow? _window;
 
     public App()
     {
-        this.InitializeComponent();
+        InitializeComponent();
 
-        UnhandledException += OnUnhandledException;
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnAppDomainUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
     }
 
-    protected override void OnLaunched(LaunchActivatedEventArgs args)
+    protected override void OnStartup(StartupEventArgs e)
     {
+        base.OnStartup(e);
+
         try
         {
             _window = new MainWindow();
-            _window.Activate();
+            _window.Show();
         }
         catch (Exception ex)
         {
-            LogCrash("OnLaunched", ex);
+            LogCrash("OnStartup", ex);
             throw;
         }
     }
 
-    private void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    private void OnDispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        LogCrash("UnhandledException", e.Exception);
+        LogCrash("DispatcherUnhandledException", e.Exception);
         e.Handled = true;
     }
 

@@ -9,10 +9,11 @@ namespace Grimoire.Data.Database;
 /// v2: Eggs, Recipes, ExpeditionLog, NarrativeProgress, TutorialProgress
 /// v3: Bonds, Grimoire, Corruption, Cosmetics, PlayerSpells, Accessibility, AstralEvents
 /// v4: Weather, GestureSignature, MemoryEchoes, ArchitecturalRituals, Constellations, AscensionHistory, SanctuaryChronicle
+/// v5: Fix CorruptionState — add NeglectedFamiliarCount/IsolatedBuildingCount/VoidAnchorCount columns
 /// </summary>
 public static class DatabaseInitializer
 {
-    private const int CurrentSchemaVersion = 4;
+    private const int CurrentSchemaVersion = 5;
 
     public static async Task InitialiseAsync(SqliteConnection connection, ILogger? logger = null)
     {
@@ -33,6 +34,10 @@ public static class DatabaseInitializer
             logger?.LogInformation("Migrating schema from v{Version} to v{Target}.", version, CurrentSchemaVersion);
             await RunMigrationsAsync(connection, version, logger);
         }
+
+        // Schema is now at CurrentSchemaVersion — seed singleton rows for
+        // tables that exist (fresh installs create them via migrations).
+        await SeedSingletonRowsAsync(connection);
     }
 
     private static async Task CreateMetaTableAsync(SqliteConnection connection)
@@ -77,6 +82,12 @@ public static class DatabaseInitializer
             logger?.LogInformation("Running migration v3 to v4");
             await RunMigration_V4(connection);
             await SetSchemaVersionAsync(connection, 4);
+        }
+        if (fromVersion < 5)
+        {
+            logger?.LogInformation("Running migration v4 to v5");
+            await RunMigration_V5(connection);
+            await SetSchemaVersionAsync(connection, 5);
         }
     }
 
@@ -130,7 +141,10 @@ public static class DatabaseInitializer
             );
             CREATE TABLE IF NOT EXISTS CorruptionState (
                 Id INTEGER PRIMARY KEY CHECK (Id = 1), CorruptionLevel INTEGER NOT NULL DEFAULT 0,
-                BaseDecayRate REAL NOT NULL DEFAULT 0.5
+                BaseDecayRate REAL NOT NULL DEFAULT 0.5,
+                NeglectedFamiliarCount INTEGER NOT NULL DEFAULT 0,
+                IsolatedBuildingCount INTEGER NOT NULL DEFAULT 0,
+                VoidAnchorCount INTEGER NOT NULL DEFAULT 0
             );
             CREATE TABLE IF NOT EXISTS CosmeticItems (
                 Id TEXT PRIMARY KEY, Name TEXT NOT NULL, Description TEXT NOT NULL DEFAULT '',
@@ -243,6 +257,32 @@ public static class DatabaseInitializer
         await cmd.ExecuteNonQueryAsync();
     }
 
+    private static async Task RunMigration_V5(SqliteConnection connection)
+    {
+        // Repair CorruptionState tables created by the v3 schema, which was
+        // missing the tracking columns the repository reads.
+        var existing = new HashSet<string>();
+        var info = connection.CreateCommand();
+        info.CommandText = "PRAGMA table_info(CorruptionState);";
+        using (var reader = await info.ExecuteReaderAsync())
+        {
+            while (await reader.ReadAsync())
+                existing.Add(reader.GetString(1));
+        }
+
+        var missing = new[] { "NeglectedFamiliarCount", "IsolatedBuildingCount", "VoidAnchorCount" }
+            .Where(c => !existing.Contains(c))
+            .ToList();
+        if (missing.Count == 0) return;
+
+        foreach (var column in missing)
+        {
+            var alter = connection.CreateCommand();
+            alter.CommandText = $"ALTER TABLE CorruptionState ADD COLUMN {column} INTEGER NOT NULL DEFAULT 0;";
+            await alter.ExecuteNonQueryAsync();
+        }
+    }
+
     private static async Task CreateV1SchemaAsync(SqliteConnection connection)
     {
         var cmd = connection.CreateCommand();
@@ -287,6 +327,15 @@ public static class DatabaseInitializer
         var seed = connection.CreateCommand();
         seed.CommandText = $"INSERT INTO GameState (PlayerId, PlayerName, ManaCrystals, TotalPlayTimeSeconds, LastSaveUTC, FirstLaunchUTC) VALUES ('{Guid.NewGuid()}', 'Architect', 100, 0, '{now}', '{now}');";
         await seed.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Idempotently seeds the singleton-row tables (Id = 1) after the full
+    /// schema is present. Safe on fresh installs and existing databases.
+    /// </summary>
+    private static async Task SeedSingletonRowsAsync(SqliteConnection connection)
+    {
+        var now = DateTimeOffset.UtcNow.ToString("o");
 
         // Seed default accessibility settings
         var accSeed = connection.CreateCommand();

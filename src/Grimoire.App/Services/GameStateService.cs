@@ -27,6 +27,8 @@ public sealed class GameStateService : IGameStateService
 
     public GameState CurrentState => _state ?? throw new InvalidOperationException("Game state not initialised.");
 
+    public bool IsInitialised => _state is not null;
+
     public GameStateService(IGameRepository repository, ILogger<GameStateService>? logger = null)
     {
         _logger = logger;
