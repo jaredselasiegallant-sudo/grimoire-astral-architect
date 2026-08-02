@@ -40,7 +40,6 @@ jobs:
           -c Release
           -r win-x64
           --self-contained true
-          --no-restore
           -v normal
           -o ./publish
 
